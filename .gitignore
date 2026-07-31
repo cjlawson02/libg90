@@ -1,0 +1,43 @@
+# Build
+build/
+cmake-build-*/
+out/
+compile_commands.json
+
+# IDE / editor
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Python
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+*.egg-info/
+
+# CMake / Ninja
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+install_manifest.txt
+.ninja_deps
+.ninja_log
+*.ninja
+
+# Coverage / sanitizers
+*.gcda
+*.gcno
+*.profraw
+*.profdata
+default.profraw
+
+# Local agent / optional reference codec checkout
+external/
+
+# Accidental vector dumps at repo root (checked-in vectors live in tests/vectors/)
+/vectors/

@@ -1,0 +1,94 @@
+name: CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint:
+    name: lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+
+      - name: Install clang-format and clang-tidy
+        run: sudo apt-get update && sudo apt-get install -y clang-format clang-tidy
+
+      - name: clang-format
+        run: bash scripts/clang_format.sh check
+
+      - name: Configure (dev, compile_commands)
+        run: cmake --preset dev
+
+      - name: clang-tidy
+        run: bash scripts/clang_tidy.sh
+
+  build:
+    name: ${{ matrix.os }} / ${{ matrix.compiler }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            compiler: gcc
+            cc: gcc
+            cxx: g++
+          - os: ubuntu-latest
+            compiler: clang
+            cc: clang
+            cxx: clang++
+          - os: macos-latest
+            compiler: apple-clang
+            cc: clang
+            cxx: clang++
+
+    steps:
+      # actions/checkout v4.2.2
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+
+      - name: Configure (dev)
+        env:
+          CC: ${{ matrix.cc }}
+          CXX: ${{ matrix.cxx }}
+        run: cmake --preset dev
+
+      - name: Build
+        run: cmake --build --preset dev -j $(nproc 2>/dev/null || sysctl -n hw.ncpu)
+
+      - name: Test
+        run: ctest --preset dev --output-on-failure
+
+  sanitize:
+    name: sanitize
+    # Blocking ASan+UBSan on main and on PRs targeting main (plan §15 + review)
+    if: >
+      github.event_name == 'pull_request' ||
+      (github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'))
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+
+      - name: Configure (sanitize)
+        run: cmake --preset sanitize
+
+      - name: Build
+        run: cmake --build --preset sanitize -j $(nproc)
+
+      - name: Test under ASan+UBSan
+        # detect_leaks is Linux-only (AppleClang aborts if set). Bypass the test
+        # preset env so CI can enable leak detection without breaking macOS
+        # `ctest --preset sanitize`.
+        working-directory: build/sanitize
+        env:
+          ASAN_OPTIONS: detect_leaks=1:halt_on_error=1
+          UBSAN_OPTIONS: print_stacktrace=1:halt_on_error=1
+        run: ctest --output-on-failure
