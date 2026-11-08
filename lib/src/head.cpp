@@ -567,12 +567,21 @@ Result<HeadFrame> encode_head(const HeadEncodeRequest& req) {
     }
   }
 
+  // AGC: unset → 0 (golden bit-identity); clamp to 0–3 when set.
+  const auto resolve_agc = [](const std::optional<uint8_t>& v) -> uint8_t {
+    if (!v)
+      return 0;
+    return *v > 3 ? uint8_t{3} : *v;
+  };
+  const uint8_t agc_a = resolve_agc(req.vfo_a.agc);
+  const uint8_t agc_b = resolve_agc(vfo_b.agc);
+
   pack_vfo(frame.data(),
            4,
            req.vfo_a.freq_hz,
            *ma.value,
            0,
-           0,
+           agc_a,
            filt_a.value->high,
            filt_a.value->low,
            *fs_a.value);
@@ -581,7 +590,7 @@ Result<HeadFrame> encode_head(const HeadEncodeRequest& req) {
            vfo_b.freq_hz,
            *mb.value,
            0,
-           0,
+           agc_b,
            filt_b.value->high,
            filt_b.value->low,
            *fs_b.value,

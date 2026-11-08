@@ -88,6 +88,8 @@ TEST(Head, Roundtrip178) {
   EXPECT_EQ(dec.value->filter_low_hz, 200);
   EXPECT_EQ(dec.value->fft_scale, 5);
   EXPECT_EQ(dec.value->volume, 3);
+  // Unset agc → wire byte 0 (VFO-A base+6 = absolute offset 10).
+  EXPECT_EQ((*raw.value)[10], 0);
 
   g90::HeadEncodeRequest req2;
   req2.profile = g90::Profile::V178;
@@ -106,6 +108,24 @@ TEST(Head, Roundtrip178) {
   const auto raw2 = g90::encode_head(req2);
   ASSERT_TRUE(raw2.ok());
   EXPECT_EQ(*raw.value, *raw2.value);
+}
+
+TEST(Head, AgcEncode) {
+  g90::HeadEncodeRequest req;
+  req.profile = g90::Profile::V179;
+  req.vfo_a.mode = g90::Mode::Usb;
+  req.vfo_a.agc = 2; // FAST
+  req.vfo_b.agc = 3; // AUTO
+
+  const auto raw = g90::encode_head(req);
+  ASSERT_TRUE(raw.ok());
+  EXPECT_EQ((*raw.value)[10], 2);  // VFO-A agc @ base 4 + 6
+  EXPECT_EQ((*raw.value)[26], 3);  // VFO-B agc @ base 20 + 6
+
+  req.vfo_a.agc = 99; // clamp → 3
+  const auto clamped = g90::encode_head(req);
+  ASSERT_TRUE(clamped.ok());
+  EXPECT_EQ((*clamped.value)[10], 3);
 }
 
 TEST(Head, Roundtrip179) {
@@ -198,6 +218,33 @@ TEST(Head, PartialFilterRawRejected) {
   const auto raw = g90::encode_head(req);
   ASSERT_FALSE(raw.ok());
   EXPECT_EQ(raw.err(), g90::Error::InvalidFilter);
+}
+
+TEST(Head, HeadphonesBitOnlyTouchesByte36) {
+  g90::HeadEncodeRequest off;
+  off.profile = g90::Profile::V179;
+  off.vfo_a.mode = g90::Mode::Am;
+  g90::HeadControls c;
+  c.headphones = false;
+  off.controls = c;
+  g90::HeadEncodeRequest on = off;
+  c.headphones = true;
+  on.controls = c;
+
+  const auto a = g90::encode_head(off);
+  const auto b = g90::encode_head(on);
+  ASSERT_TRUE(a.ok());
+  ASSERT_TRUE(b.ok());
+  const auto& fa = *a.value;
+  const auto& fb = *b.value;
+  ASSERT_EQ(fa.size(), fb.size());
+  for (size_t i = 0; i + 4 < fa.size(); i++) {  // all but the trailing CRC-32
+    if (i == 36) {
+      EXPECT_EQ(fa[i] ^ fb[i], g90::kHeadCtrl1Headphones);
+    } else {
+      EXPECT_EQ(fa[i], fb[i]) << "byte " << i;
+    }
+  }
 }
 
 TEST(Head, ControlsPackAndOverlay) {

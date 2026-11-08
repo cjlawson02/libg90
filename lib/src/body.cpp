@@ -60,7 +60,8 @@ BodyStatus parse_body_status(std::span<const uint8_t, 48> header48) {
   std::memcpy(st.header.data(), header48.data(), 48);
   std::memcpy(st.header_tail.data(), header48.data() + 13, 35);
 
-  st.s_meter = static_cast<int8_t>(header48[0]);
+  // Stock: always-negative sign-extend (GSOC unpack / DispUnit | 0xffffff00).
+  st.s_meter = static_cast<int>(header48[0]) - 256;
   st.po = header48[1];
   st.swr = header48[2];
   st.voltage_raw = header48[3];

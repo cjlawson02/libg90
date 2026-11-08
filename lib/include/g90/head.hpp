@@ -73,7 +73,11 @@ constexpr uint8_t kHeadCtrl1TunerEn = 0x20;
 constexpr uint8_t kHeadCtrl1NbEn = 0x10;
 /// @brief Bit in byte 36: mic compression enable.
 constexpr uint8_t kHeadCtrl1MicComp = 0x08;
-/// @brief Bit in byte 36: headphones enable.
+/// @brief Bit in byte 36: `output_headphones` (stock: `getDemodAudioPath`, set in every mode but CW/CWR).
+///
+/// Set: the body mutes its own speaker (MainUnit V1.81 forces its AF gain to 0 and drives PA12) and
+/// puts the demodulated AF on DE-9 phones1/2 for the head to play. The head volume no longer applies.
+/// Ears-on verified on a GSOC, 2026-11-07.
 constexpr uint8_t kHeadCtrl1Headphones = 0x04;
 /// @brief Bit in byte 36: split enable.
 constexpr uint8_t kHeadCtrl1Split = 0x02;
@@ -202,6 +206,10 @@ struct HeadVfo {
   /// Unset → `1` for VFO-A; for VFO-B, inherits A's resolved scale after encode.
   std::optional<uint8_t> fft_scale;
 
+  /// AGC mode byte (VFO block +6): 0=OFF, 1=SLOW, 2=FAST, 3=AUTO.
+  /// Unset → `0` (preserves existing golden encode bit-identity).
+  std::optional<uint8_t> agc;
+
   /// Raw filter bytes override Hz fields; both must be set together or
   /// `encode_head` returns `Error::InvalidFilter`.
   std::optional<uint8_t> filter_high_raw;
@@ -279,6 +287,7 @@ struct HeadEncodeRequest {
                 .filter_high_hz = {},
                 .filter_low_hz = {},
                 .fft_scale = {},
+                .agc = {},
                 .filter_high_raw = {},
                 .filter_low_raw = {}};
   std::optional<HeadControls> controls;

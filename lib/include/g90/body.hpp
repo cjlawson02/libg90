@@ -22,7 +22,10 @@ struct FftFingerprint {
 
 /// @brief Parsed 48-byte status header from a body reply frame.
 struct BodyStatus {
-  int8_t s_meter = 0;                    ///< S-meter reading (signed byte 0).
+  /// S-meter from body byte 0. Stock GSOC/DispUnit force always-negative via
+  /// `(byte | 0xffffff00)` / `~(~(byte<<24)>>24)` ≡ `byte - 256` (range
+  /// `[-256, -1]`). Not a C `int8_t` cast — that only matches for `byte ≥ 0x80`.
+  int s_meter = 0;
   uint8_t po = 0;                        ///< Power output indicator (byte 1).
   uint8_t swr = 0;                       ///< SWR raw value (byte 2).
   uint8_t voltage_raw = 0;               ///< Supply voltage ×0.1 V (byte 3).

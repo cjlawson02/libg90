@@ -56,7 +56,7 @@ TEST(Body, MinimalCrcAndFft) {
         static_cast<uint16_t>(fft[i] | (static_cast<uint16_t>(fft[i + 1]) << 8));
     EXPECT_EQ(dec.value->fft[i / 2], expect) << "bin " << (i / 2);
   }
-  EXPECT_EQ(dec.value->status.s_meter, 0);
+  EXPECT_EQ(dec.value->status.s_meter, -256); // zero header byte0 → stock byte-256
   EXPECT_EQ(dec.value->status.atu, 0);
 }
 
@@ -83,7 +83,7 @@ TEST(Body, CorruptCrcDetected) {
 
 TEST(Body, StatusFromSyntheticHeader) {
   std::array<uint8_t, 48> header{};
-  header[0] = 0x9C; // signed -100
+  header[0] = 0x9C; // stock: 0x9C - 256 = -100 (also equals int8)
   header[1] = 10;
   header[2] = 20;
   header[3] = 132; // 13.2 V
@@ -98,6 +98,15 @@ TEST(Body, StatusFromSyntheticHeader) {
 
   const auto st = g90::parse_body_status(std::span<const uint8_t, 48>(header));
   EXPECT_EQ(st.s_meter, -100);
+
+  // byte < 0x80: int8 would be +100; stock is always byte-256.
+  header[0] = 0x64;
+  const auto st_lo = g90::parse_body_status(std::span<const uint8_t, 48>(header));
+  EXPECT_EQ(st_lo.s_meter, -156);
+
+  header[0] = 0x7F;
+  const auto st_edge = g90::parse_body_status(std::span<const uint8_t, 48>(header));
+  EXPECT_EQ(st_edge.s_meter, -129);
   EXPECT_EQ(st.po, 10);
   EXPECT_EQ(st.swr, 20);
   EXPECT_DOUBLE_EQ(st.voltage_v(), 13.2);

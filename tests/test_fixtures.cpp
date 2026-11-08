@@ -155,7 +155,7 @@ TEST(Fixtures, FakeHead181) {
   const auto l = g90::decode_body(*late);
   const auto diffs = g90::header_diffs(e.value->status.header, l.value->status.header);
   EXPECT_FALSE(diffs.empty());
-  EXPECT_EQ(l.value->status.s_meter, 0x64); // signed +100
+  EXPECT_EQ(l.value->status.s_meter, -156); // wire 0x64 → stock byte-256
 }
 
 TEST(Fixtures, EffectDiff181CwEMarch) {
