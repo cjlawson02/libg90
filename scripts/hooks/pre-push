@@ -1,0 +1,27 @@
+#!/usr/bin/env bash
+# Refuse a push unless scripts/ci_local.sh passes on the commit being pushed.
+# Install: bash scripts/install_hooks.sh. Skip once: git push --no-verify.
+set -euo pipefail
+
+root="$(git rev-parse --show-toplevel)"
+zero="0000000000000000000000000000000000000000"
+head="$(git rev-parse HEAD)"
+check=0
+
+while read -r _local_ref local_sha _remote_ref _remote_sha; do
+  [[ "$local_sha" == "$zero" ]] && continue   # a branch deletion: nothing to check
+  check=1
+  if [[ "$local_sha" != "$head" ]]; then
+    echo "pre-push: pushing ${local_sha:0:7}, but HEAD is ${head:0:7}; check out what you push" >&2
+    exit 1
+  fi
+done
+
+[[ "$check" == 1 ]] || exit 0
+
+if ! git -C "$root" diff --quiet HEAD --; then
+  echo "pre-push: tracked files differ from HEAD; commit or stash them so the checks see what is pushed" >&2
+  exit 1
+fi
+
+bash "$root/scripts/ci_local.sh"
