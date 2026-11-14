@@ -574,8 +574,9 @@ Result<HeadFrame> encode_head(const HeadEncodeRequest& req) {
 
   // AGC: unset → 0 (golden bit-identity); clamp to 0–3 when set.
   const auto resolve_agc = [](const std::optional<uint8_t>& v) -> uint8_t {
-    if (!v)
+    if (!v) {
       return 0;
+    }
     return *v > 3 ? uint8_t{3} : *v;
   };
   const uint8_t agc_a = resolve_agc(req.vfo_a.agc);

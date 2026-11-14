@@ -73,11 +73,12 @@ constexpr uint8_t kHeadCtrl1TunerEn = 0x20;
 constexpr uint8_t kHeadCtrl1NbEn = 0x10;
 /// @brief Bit in byte 36: mic compression enable.
 constexpr uint8_t kHeadCtrl1MicComp = 0x08;
-/// @brief Bit in byte 36: `output_headphones` (stock: `getDemodAudioPath`, set in every mode but CW/CWR).
+/// @brief Bit in byte 36: `output_headphones` (stock: `getDemodAudioPath`, set in every mode but
+/// CW/CWR).
 ///
 /// Set: the body mutes its own speaker (MainUnit V1.81 forces its AF gain to 0 and drives PA12) and
-/// puts the demodulated AF on DE-9 phones1/2 for the head to play. The head volume no longer applies.
-/// Ears-on verified on a GSOC, 2026-11-07.
+/// puts the demodulated AF on DE-9 phones1/2 for the head to play. The head volume no longer
+/// applies. Ears-on verified on a GSOC, 2026-11-07.
 constexpr uint8_t kHeadCtrl1Headphones = 0x04;
 /// @brief Bit in byte 36: split enable.
 constexpr uint8_t kHeadCtrl1Split = 0x02;

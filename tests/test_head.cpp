@@ -129,8 +129,8 @@ TEST(Head, AgcEncode) {
 
   const auto raw = g90::encode_head(req);
   ASSERT_TRUE(raw.ok());
-  EXPECT_EQ((*raw.value)[10], 2);  // VFO-A agc @ base 4 + 6
-  EXPECT_EQ((*raw.value)[26], 3);  // VFO-B agc @ base 20 + 6
+  EXPECT_EQ((*raw.value)[10], 2); // VFO-A agc @ base 4 + 6
+  EXPECT_EQ((*raw.value)[26], 3); // VFO-B agc @ base 20 + 6
 
   req.vfo_a.agc = 99; // clamp → 3
   const auto clamped = g90::encode_head(req);
@@ -248,7 +248,7 @@ TEST(Head, HeadphonesBitOnlyTouchesByte36) {
   const auto& fa = *a.value;
   const auto& fb = *b.value;
   ASSERT_EQ(fa.size(), fb.size());
-  for (size_t i = 0; i + 4 < fa.size(); i++) {  // all but the trailing CRC-32
+  for (size_t i = 0; i + 4 < fa.size(); i++) { // all but the trailing CRC-32
     if (i == 36) {
       EXPECT_EQ(fa[i] ^ fb[i], g90::kHeadCtrl1Headphones);
     } else {
