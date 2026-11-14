@@ -92,6 +92,15 @@ constexpr uint8_t kHeadCtrl6VfoB = 0x01;
 /// @note Product label `1.81` aliases to `Profile::V179`.
 [[nodiscard]] Result<Profile> parse_profile(std::string_view s);
 
+/// @brief Profile for the MainUnit firmware a body frame reports.
+/// @param major Body byte 7 (`BodyStatus::info7`), e.g. `0x01`.
+/// @param minor Body byte 6 (`BodyStatus::info6`), e.g. `0x81`.
+/// @return `Profile::V178` below `1.79`, else `Profile::V179`.
+/// @note The bytes are hex digits as the stock head prints them (`%X.%02X`):
+/// `0x01`/`0x81` is `1.81`. The MainUnit applies the head frame's mode and
+/// filter bytes, so its version, not the head's, picks the profile.
+[[nodiscard]] Profile profile_for_body_version(uint8_t major, uint8_t minor) noexcept;
+
 /// @brief Parse a mode name from CLI or config text.
 /// @param s Mode name (`"USB"`, `"L-D"`, `"CW-R"`, etc.).
 /// @return Matching `Mode`, or `Error::InvalidMode`.

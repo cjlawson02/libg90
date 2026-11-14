@@ -273,6 +273,11 @@ Result<Profile> parse_profile(std::string_view s) {
   return Result<Profile>::Err(Error::InvalidProfile);
 }
 
+Profile profile_for_body_version(uint8_t major, uint8_t minor) noexcept {
+  const unsigned ver = (static_cast<unsigned>(major) << 8) | minor;
+  return ver < 0x179 ? Profile::V178 : Profile::V179;
+}
+
 Result<Mode> mode_from_string(std::string_view s) {
   std::string key = ascii_upper(s);
   if (key == "LSB-DIG" || key == "LSB_DIG" || key == "LD") {

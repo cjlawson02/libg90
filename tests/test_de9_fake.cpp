@@ -272,6 +272,37 @@ TEST(De9Fake, De9LinkExchangeRoundTrip) {
   EXPECT_EQ(link.last_rx()->size(), g90::kBodyFrameLen);
 }
 
+TEST(De9Fake, De9LinkSetProfileChangesEncode) {
+  const auto body = live_body_fixture();
+  ASSERT_EQ(body.size(), g90::kBodyFrameLen);
+
+  auto fake = std::make_unique<g90::de9::FakeStream>();
+  fake->set_reply_after_write(body);
+
+  g90::De9Link link(std::move(fake), g90::Profile::V179);
+  EXPECT_EQ(link.profile(), g90::Profile::V179);
+  g90::HeadEncodeRequest req;
+  req.vfo_a.mode = g90::Mode::Usb;
+  req.vfo_a.freq_hz = 14'225'000;
+
+  ASSERT_TRUE(link.exchange(req, std::chrono::milliseconds{1000}).ok());
+  ASSERT_NE(link.last_tx(), nullptr);
+  const auto v179 = g90::decode_head(g90::Profile::V179, *link.last_tx());
+  ASSERT_TRUE(v179.ok());
+  EXPECT_EQ(v179.value->mode_a, g90::Mode::Usb);
+
+  link.set_profile(g90::Profile::V178);
+  EXPECT_EQ(link.profile(), g90::Profile::V178);
+  ASSERT_TRUE(link.exchange(req, std::chrono::milliseconds{1000}).ok());
+  const auto v178 = g90::decode_head(g90::Profile::V178, *link.last_tx());
+  ASSERT_TRUE(v178.ok());
+  EXPECT_EQ(v178.value->mode_a, g90::Mode::Usb);
+  // The same frame read as V179 lands on L-D (raw 1): the encode really changed
+  const auto misread = g90::decode_head(g90::Profile::V179, *link.last_tx());
+  ASSERT_TRUE(misread.ok());
+  EXPECT_EQ(misread.value->mode_a, g90::Mode::Ld);
+}
+
 TEST(De9Fake, LastBodyClearedOnFailedHunt) {
   const auto body = live_body_fixture();
   g90::de9::FakeStream fake;

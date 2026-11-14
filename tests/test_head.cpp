@@ -31,6 +31,16 @@ TEST(Head, CrossProfileMishap) {
   EXPECT_EQ(g90::mode_to_string(*landed.value), "L-D");
 }
 
+TEST(Head, ProfileForBodyVersion) {
+  EXPECT_EQ(g90::profile_for_body_version(0x01, 0x78), g90::Profile::V178);
+  EXPECT_EQ(g90::profile_for_body_version(0x01, 0x00), g90::Profile::V178);
+  EXPECT_EQ(g90::profile_for_body_version(0x00, 0x00), g90::Profile::V178);
+  EXPECT_EQ(g90::profile_for_body_version(0x01, 0x79), g90::Profile::V179);
+  EXPECT_EQ(g90::profile_for_body_version(0x01, 0x80), g90::Profile::V179);
+  EXPECT_EQ(g90::profile_for_body_version(0x01, 0x81), g90::Profile::V179);
+  EXPECT_EQ(g90::profile_for_body_version(0x02, 0x00), g90::Profile::V179);
+}
+
 TEST(Head, Filter178) {
   const auto raw = g90::encode_filter(g90::Profile::V178, 2625, 200);
   EXPECT_EQ(raw.high, 100);

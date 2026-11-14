@@ -171,6 +171,13 @@ public:
   [[nodiscard]] Result<DecodedBody> exchange(const HeadEncodeRequest& req,
                                              std::chrono::milliseconds timeout);
 
+  /// @brief Codec profile used to encode head frames from the next `exchange` on.
+  /// @param profile New profile (e.g. from `profile_for_body_version`).
+  void set_profile(Profile profile) noexcept { profile_ = profile; }
+
+  /// @brief Codec profile `exchange` encodes with.
+  [[nodiscard]] Profile profile() const noexcept { return profile_; }
+
   /// @brief Last head frame transmitted by a successful or attempted `exchange`.
   /// @return Pointer valid until the next `exchange`; nullptr if none yet.
   [[nodiscard]] const HeadFrame* last_tx() const noexcept {
