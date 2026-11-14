@@ -84,6 +84,14 @@ brew install llvm
 export PATH="$(brew --prefix llvm)/bin:$PATH"
 ```
 
+`bash scripts/ci_local.sh` runs the CI steps here (lint, `dev` and
+`sanitize` build + tests; not CI's other compilers). To run it before every
+push:
+
+```bash
+bash scripts/install_hooks.sh   # pre-push; skip once with git push --no-verify
+```
+
 ## Tests and fixtures
 
 Checked-in DE-9 hex (static wire bytes) lives under `tests/fixtures/`. Design

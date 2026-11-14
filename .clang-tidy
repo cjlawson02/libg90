@@ -17,6 +17,7 @@ Checks: >
   readability-static-accessed-through-instance,
   readability-uniqueptr-delete-release,
   -bugprone-easily-swappable-parameters,
+  -bugprone-signed-bitwise,
   -cppcoreguidelines-avoid-magic-numbers,
   -readability-magic-numbers,
   -modernize-use-trailing-return-type,
