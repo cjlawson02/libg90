@@ -273,6 +273,11 @@ Result<Profile> parse_profile(std::string_view s) {
   return Result<Profile>::Err(Error::InvalidProfile);
 }
 
+Profile profile_for_body_version(uint8_t major, uint8_t minor) noexcept {
+  const unsigned ver = (static_cast<unsigned>(major) << 8) | minor;
+  return ver < 0x179 ? Profile::V178 : Profile::V179;
+}
+
 Result<Mode> mode_from_string(std::string_view s) {
   std::string key = ascii_upper(s);
   if (key == "LSB-DIG" || key == "LSB_DIG" || key == "LD") {
@@ -569,8 +574,9 @@ Result<HeadFrame> encode_head(const HeadEncodeRequest& req) {
 
   // AGC: unset → 0 (golden bit-identity); clamp to 0–3 when set.
   const auto resolve_agc = [](const std::optional<uint8_t>& v) -> uint8_t {
-    if (!v)
+    if (!v) {
       return 0;
+    }
     return *v > 3 ? uint8_t{3} : *v;
   };
   const uint8_t agc_a = resolve_agc(req.vfo_a.agc);

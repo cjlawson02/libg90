@@ -73,11 +73,12 @@ constexpr uint8_t kHeadCtrl1TunerEn = 0x20;
 constexpr uint8_t kHeadCtrl1NbEn = 0x10;
 /// @brief Bit in byte 36: mic compression enable.
 constexpr uint8_t kHeadCtrl1MicComp = 0x08;
-/// @brief Bit in byte 36: `output_headphones` (stock: `getDemodAudioPath`, set in every mode but CW/CWR).
+/// @brief Bit in byte 36: `output_headphones` (stock: `getDemodAudioPath`, set in every mode but
+/// CW/CWR).
 ///
 /// Set: the body mutes its own speaker (MainUnit V1.81 forces its AF gain to 0 and drives PA12) and
-/// puts the demodulated AF on DE-9 phones1/2 for the head to play. The head volume no longer applies.
-/// Ears-on verified on a GSOC, 2026-11-07.
+/// puts the demodulated AF on DE-9 phones1/2 for the head to play. The head volume no longer
+/// applies. Ears-on verified on a GSOC, 2026-11-07.
 constexpr uint8_t kHeadCtrl1Headphones = 0x04;
 /// @brief Bit in byte 36: split enable.
 constexpr uint8_t kHeadCtrl1Split = 0x02;
@@ -91,6 +92,15 @@ constexpr uint8_t kHeadCtrl6VfoB = 0x01;
 /// @return `Profile::V178` or `Profile::V179` on success.
 /// @note Product label `1.81` aliases to `Profile::V179`.
 [[nodiscard]] Result<Profile> parse_profile(std::string_view s);
+
+/// @brief Profile for the MainUnit firmware a body frame reports.
+/// @param major Body byte 7 (`BodyStatus::info7`), e.g. `0x01`.
+/// @param minor Body byte 6 (`BodyStatus::info6`), e.g. `0x81`.
+/// @return `Profile::V178` below `1.79`, else `Profile::V179`.
+/// @note The bytes are hex digits as the stock head prints them (`%X.%02X`):
+/// `0x01`/`0x81` is `1.81`. The MainUnit applies the head frame's mode and
+/// filter bytes, so its version, not the head's, picks the profile.
+[[nodiscard]] Profile profile_for_body_version(uint8_t major, uint8_t minor) noexcept;
 
 /// @brief Parse a mode name from CLI or config text.
 /// @param s Mode name (`"USB"`, `"L-D"`, `"CW-R"`, etc.).
